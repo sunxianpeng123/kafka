@@ -1,13 +1,11 @@
-package demo;
+package interceptor;
 
-import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.TopicPartition;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Properties;
 
 /**
@@ -44,15 +42,16 @@ public class ConsumerDemo {
         properties.put("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
 
         KafkaConsumer<String, String> kafkaConsumer = new KafkaConsumer<>(properties);
+        String topic ="second";
 //      订阅某个topic
-//        kafkaConsumer.subscribe(Arrays.asList("first"));
+        kafkaConsumer.subscribe(Arrays.asList(topic));
 //        kafkaConsumer.subscribe(Collections.singleton("first"));//只消费一个
 //        kafkaConsumer.assign(Collections.singleton(new TopicPartition("first",0)));
         //定位读取 定位某个topic的某个分区的offset
-        kafkaConsumer.seek(new TopicPartition("first",0),2);
+//        kafkaConsumer.seek(new TopicPartition(topic,0),2);
         //Consumer订阅了Topic为test的消息，Consumer调用poll方法来轮循Kafka集群的消息，其中的参数100是超时时间（Consumer等待直到Kafka集群中没有消息为止）：
         while (true) {
-            ConsumerRecords<String, String> records = kafkaConsumer.poll(100);
+            ConsumerRecords<String, String> records  = kafkaConsumer.poll(100);
             for (ConsumerRecord<String, String> record : records) {
                 System.out.printf("offset = %d, value = %s topic= %s partition= %s",
                         record.offset(), record.value(), record.topic(), record.partition());

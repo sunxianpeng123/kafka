@@ -1,12 +1,14 @@
 package basicAPI;
 
+import kafka.api.FetchRequest;
+import kafka.api.FetchRequestBuilder;
 import kafka.cluster.BrokerEndPoint;
-import kafka.javaapi.PartitionMetadata;
-import kafka.javaapi.TopicMetadata;
-import kafka.javaapi.TopicMetadataRequest;
-import kafka.javaapi.TopicMetadataResponse;
+import kafka.javaapi.*;
 import kafka.javaapi.consumer.SimpleConsumer;
+import kafka.javaapi.message.ByteBufferMessageSet;
+import kafka.message.MessageAndOffset;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -39,7 +41,9 @@ public class LowerConsumer {
 //        offset
         Long offset =2L;
 
-
+        LowerConsumer lowerConsumer = new LowerConsumer();
+//        BrokerEndPoint leader = lowerConsumer.findLeader(brokers, port, topic, partition, offset);
+        lowerConsumer.getData(brokers,port,topic,partition,offset);
 
     }
 
@@ -74,7 +78,32 @@ public class LowerConsumer {
         return null;
     }
 //    获取数据
-    private  void getData(){
+    private  void getData(List<String> brokers, int port, String topic, int partition, Long offset){
+        BrokerEndPoint leader = findLeader(brokers, port, topic, partition, offset);
+        if (leader==null){
+            return;
+        }
+        String leaderHost = leader.host();
+//        获取数据的消费者对象
+        SimpleConsumer getData=new SimpleConsumer(leaderHost,port,1000,
+                1024*4,"getData");
+//        创建获取数据的对象
+        FetchRequest fetchRequest = new FetchRequestBuilder()
+                .addFetch(topic, partition, offset, 1000)//fetchSize:字节数
+//                .addFetch()//可以添加多个主题
+                .build();
+//      获取数据返回值
+        FetchResponse fetchResponse = getData.fetch(fetchRequest);
+//      解析返回值
+        ByteBufferMessageSet messageAndOffsets = fetchResponse.messageSet(topic, partition);
+//        遍历并打印数据
+        for (MessageAndOffset messageAndOffset:messageAndOffsets){
+            long offset1=messageAndOffset.offset();
+            ByteBuffer payload = messageAndOffset.message().payload();
+            byte[] bytes = new byte[payload.limit()];
+            payload.get(bytes);
+            System.out.println(offset1+"__"+new String(bytes));
+        }
 
     }
 
